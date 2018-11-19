@@ -1,0 +1,1300 @@
+STARTUP 0 1542643804
+PARSE 9889 1542643804
+// This march file represents the smallest possible runtime interface for
+// cascade.  It instantiates the root and a single software-backed virtual
+// clock.
+
+include data/stdlib/stdlib.v;
+PARSE 9889 1542643804
+///////////////////////////////////////////////////////////////////////////////
+//
+// This file contains declarations for the cascade standard library.  The names
+// of these modules are reserved by cascade and cannot be overriden by user
+// programs.  Target-specific backend implementations are expected to provide a
+// march file which instantiates whichever of these modules that backend
+// supports and to provide appropriate annotations for those instantiations.
+// At a minimum, a target-specific implementation must instantiate both the
+// Root and the global clock.
+//
+// All of the modules in the standard library support the following
+// annotations.  Additional module-specific annotations are discussed below.
+//
+// __target = "..." 
+//   Required. Tells the compiler class which core compiler to use.
+// __target2 = "..."
+//   Optional. Enables jit compilation and tells the compiler class which core
+//   compiler to use during the second pass compilation.
+// __loc = "..."
+//   Optional. Tells the compiler class which interface compiler to use.  If
+//   not provided, defaults to "runtime", ie in the same process space as the
+//   runtime.
+// __loc2 = "..."
+//   Optional. Enables jit compilation and tells the compiler class which
+//   interface compiler to use during the second pass compilation.
+//
+///////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////
+// Minimal Implementation:
+///////////////////////////////////////////////////////////////////////////////
+
+// The top-level module. Evaluated module items are inserted here.
+(*__std="logic"*)
+module Root(); 
+endmodule
+DECL 9889 1542643804
+(*__std = "logic"*) 
+module Root();
+endmodule
+PARSE 9889 1542643804
+
+// The top-level virtual clock
+(*__std="clock"*)
+module Clock(
+  output wire val
+);
+
+  // Possible Implementation:
+  //
+  // output reg val = 0;
+  // always @(val) begin
+  //  #1; val <= ~val;  
+  // end
+
+endmodule
+DECL 9889 1542643804
+(*__std = "clock"*) 
+module Clock(val);
+	output wire val;
+endmodule
+PARSE 9889 1542643804
+
+///////////////////////////////////////////////////////////////////////////////
+// Target-Specific Components:
+///////////////////////////////////////////////////////////////////////////////
+
+// The top-level reset signal
+(*__std="reset"*)
+module Reset(
+  output wire val
+);
+
+  // Possible Implementation:
+  //
+  // output wire val = <reset pin>;
+
+endmodule
+DECL 9889 1542643804
+(*__std = "reset"*) 
+module Reset(val);
+	output wire val;
+endmodule
+PARSE 9889 1542643804
+
+// An arbitrary width source of binary inputs
+(*__std="pad"*)
+module Pad#(
+  parameter WIDTH = 4
+)(
+  output wire[WIDTH-1:0] val
+);
+
+  // Possible Implementation:
+  //
+  // output wire[WIDTH-1:0] val = <pad pins>;
+
+endmodule
+DECL 9889 1542643804
+(*__std = "pad"*) 
+module Pad(val);
+	parameter WIDTH = 4;
+	output wire[WIDTH - 1:0] val;
+endmodule
+PARSE 9889 1542643804
+
+// An arbitrary width source of binary outputs
+(*__std="led"*)
+module Led#(
+  parameter WIDTH = 8
+)(
+  input wire[WIDTH-1:0] val
+);
+
+  // Possible Implementation:
+  //
+  // input wire[WIDTH-1:0] val;
+  // assign <led pins> = val;
+
+endmodule
+DECL 9889 1542643804
+(*__std = "led"*) 
+module Led(val);
+	parameter WIDTH = 8;
+	input wire[WIDTH - 1:0] val;
+endmodule
+PARSE 9889 1542643804
+
+// An arbitrary width source of binary outputs
+(*__std="gpio"*)
+module Gpio#(
+  parameter WIDTH = 8
+)(
+  input wire[WIDTH-1:0] val
+);
+
+  // Possible Implementation:
+  //
+  // input wire[WIDTH-1:0] val;
+  // assign <gpio pins> = val;
+
+endmodule
+DECL 9889 1542643804
+(*__std = "gpio"*) 
+module Gpio(val);
+	parameter WIDTH = 8;
+	input wire[WIDTH - 1:0] val;
+endmodule
+PARSE 9889 1542643804
+
+///////////////////////////////////////////////////////////////////////////////
+// Reusable Data-Structures:
+///////////////////////////////////////////////////////////////////////////////
+
+// An dual-port-read single-port-write memory with arbitrary size and byte
+// width.  Supports additional annotations below:
+// 
+// __file = "..."
+//   Optional. If specified the contents of this memory will be read/written
+//   from/to this file when the program begins/finishes executing.
+(*__std="memory",__target="sw"*)
+module Memory#(
+  parameter ADDR_SIZE = 4,
+  parameter BYTE_SIZE = 8
+)(
+  input  wire clock,
+  input  wire wen,
+  input  wire[ADDR_SIZE-1:0] raddr1,
+  output wire[BYTE_SIZE-1:0] rdata1,
+  input  wire[ADDR_SIZE-1:0] raddr2,
+  output wire[BYTE_SIZE-1:0] rdata2,
+  input  wire[ADDR_SIZE-1:0] waddr,
+  input  wire[BYTE_SIZE-1:0] wdata
+);
+
+  // Possible Implementation:
+  //
+  // input wire clock;
+  // input wire wen;
+  // input wire[ADDR_SIZE-1:0] raddr1;
+  // input wire[ADDR_SIZE-1:0] raddr2;
+  // input wire[ADDR_SIZE-1:0] waddr;
+  // input wire[BYTE_SIZE-1:0] wdata;
+  //
+  // output wire[BYTE_SIZE-1:0] rdata1;
+  // output wire[BYTE_SIZE-1:0] rdata2;
+
+  // reg[BYTE_SIZE-1:0] mem[ADDR_SIZE-1:0];
+  // assign rdata1 = mem[raddr1];
+  // assign rdata2 = mem[raddr2];
+  // always @(posedge clock) begin
+  //   if (wen) begin 
+  //     mem[waddr] <= wdata;
+  //   end
+  // end
+
+endmodule
+DECL 9889 1542643804
+(*__std = "memory",__target = "sw"*) 
+module Memory(clock,wen,raddr1,rdata1,raddr2,rdata2,waddr,wdata);
+	parameter ADDR_SIZE = 4;
+	parameter BYTE_SIZE = 8;
+	input wire clock;
+	input wire wen;
+	input wire[ADDR_SIZE - 1:0] raddr1;
+	output wire[BYTE_SIZE - 1:0] rdata1;
+	input wire[ADDR_SIZE - 1:0] raddr2;
+	output wire[BYTE_SIZE - 1:0] rdata2;
+	input wire[ADDR_SIZE - 1:0] waddr;
+	input wire[BYTE_SIZE - 1:0] wdata;
+endmodule
+PARSE 9889 1542643804
+
+// A bounded-depth read/write fifo. Supports additional annotations below.
+// Attempting to write a new value into a full fifo or to read a value from
+// an empty fifo will result in undefined behavor.
+//
+// __file = "..."
+//   Optional. If specified this fifo will be initialized with values taken
+//   from this file. If there are more values in this file than the fifo's
+//   maximum depth, this fifo will continue to pull values from the file until
+//   it is exhausted.
+// __count = "..."
+//   Optional. If specifid along with __file, this fifo will be initialized
+//   with 'count' copies of the data in __file.
+(*__std="fifo",__target="sw"*)
+module Fifo#(
+  parameter DEPTH = 8,
+  parameter BYTE_SIZE = 8
+)(
+  input  wire clock,
+  input  wire rreq,
+  output wire[BYTE_SIZE-1:0] rdata,
+  input  wire wreq,
+  input  wire[BYTE_SIZE-1:0] wdata,
+  output wire empty,
+  output wire full
+);
+
+  // Possible Implementation:
+  //
+  // input wire rreq;
+  // input wire wreq;
+  // input wire[BYTE_SIZE-1:0] wdata;
+  //
+  // reg[BYTE_SIZE-1:0] fifo[log(DEPTH)-1:0];
+  // reg[log(DEPTH)-1:0] head = 0;
+  // reg[log(DEPTH)-1:0] tail = 1;
+  //
+  // output wire[BYTE_SIZE-1:0] rdata = fifo[head];
+  // output wire empty = (head+1 == tail) & <file empty>;
+  // output wire full = (head == tail) | !<file empty>;
+  //
+  // initial <fill from file until full or file empty>;
+  //
+  // always @(posedge clock) begin
+  //   if (rreq) begin
+  //     head <= head+1;
+  //   end
+  //   if (wreq) begin 
+  //     fifo[tail] <= wdata;
+  //     tail <= tail+1;
+  //   end
+  //   if (!<file empty>) begin
+  //     fifo[tail] <= <next file data>;
+  //     tail <= tail+1;  
+  //   end
+  // end
+
+endmodule
+DECL 9889 1542643804
+(*__std = "fifo",__target = "sw"*) 
+module Fifo(clock,rreq,rdata,wreq,wdata,empty,full);
+	parameter DEPTH = 8;
+	parameter BYTE_SIZE = 8;
+	input wire clock;
+	input wire rreq;
+	output wire[BYTE_SIZE - 1:0] rdata;
+	input wire wreq;
+	input wire[BYTE_SIZE - 1:0] wdata;
+	output wire empty;
+	output wire full;
+endmodule
+PARSE 9889 1542643804
+
+PARSE 9889 1542643804
+
+
+(*__target="sw", __loc="runtime"*)
+Root root();
+ITEM 9889 1542643804
+(*__std = "logic",__target = "sw",__loc = "runtime"*) 
+module Root();
+endmodule
+PARSE 9889 1542643804
+
+
+(*__target="sw", __loc="runtime"*)                    
+Clock clock();
+ITEM 9889 1542643804
+(*__std = "logic",__target = "sw",__loc = "runtime"*) 
+module Root();
+	(*__target = "sw",__loc = "runtime"*) 
+	Clock clock();
+endmodule
+PARSE 9889 1542643804
+
+
+PARSE 69912 1542643804
+include verilog/time.v;
+PARSE 69912 1542643804
+include constants.v;
+ERROR 69912 1542643804
+Unable to resolve include directive >>> include constants.v; <<<
+ERROR 69912 1542643804
+  Check your filename or try adding additional include paths using the -I option.
+PARSE 483987113 1542643808
+
+ERROR 483987113 1542643808
+*** User Interrupt:
+  > Caught Ctrl-D.
+SHUTDOWN 483987114 1542643808
+STARTUP 0 1542643852
+PARSE 0 1542643852
+// This march file represents the smallest possible runtime interface for
+// cascade.  It instantiates the root and a single software-backed virtual
+// clock.
+
+include data/stdlib/stdlib.v;
+PARSE 0 1542643852
+///////////////////////////////////////////////////////////////////////////////
+//
+// This file contains declarations for the cascade standard library.  The names
+// of these modules are reserved by cascade and cannot be overriden by user
+// programs.  Target-specific backend implementations are expected to provide a
+// march file which instantiates whichever of these modules that backend
+// supports and to provide appropriate annotations for those instantiations.
+// At a minimum, a target-specific implementation must instantiate both the
+// Root and the global clock.
+//
+// All of the modules in the standard library support the following
+// annotations.  Additional module-specific annotations are discussed below.
+//
+// __target = "..." 
+//   Required. Tells the compiler class which core compiler to use.
+// __target2 = "..."
+//   Optional. Enables jit compilation and tells the compiler class which core
+//   compiler to use during the second pass compilation.
+// __loc = "..."
+//   Optional. Tells the compiler class which interface compiler to use.  If
+//   not provided, defaults to "runtime", ie in the same process space as the
+//   runtime.
+// __loc2 = "..."
+//   Optional. Enables jit compilation and tells the compiler class which
+//   interface compiler to use during the second pass compilation.
+//
+///////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////
+// Minimal Implementation:
+///////////////////////////////////////////////////////////////////////////////
+
+// The top-level module. Evaluated module items are inserted here.
+(*__std="logic"*)
+module Root(); 
+endmodule
+DECL 0 1542643852
+(*__std = "logic"*) 
+module Root();
+endmodule
+PARSE 0 1542643852
+
+// The top-level virtual clock
+(*__std="clock"*)
+module Clock(
+  output wire val
+);
+
+  // Possible Implementation:
+  //
+  // output reg val = 0;
+  // always @(val) begin
+  //  #1; val <= ~val;  
+  // end
+
+endmodule
+DECL 0 1542643852
+(*__std = "clock"*) 
+module Clock(val);
+	output wire val;
+endmodule
+PARSE 0 1542643852
+
+///////////////////////////////////////////////////////////////////////////////
+// Target-Specific Components:
+///////////////////////////////////////////////////////////////////////////////
+
+// The top-level reset signal
+(*__std="reset"*)
+module Reset(
+  output wire val
+);
+
+  // Possible Implementation:
+  //
+  // output wire val = <reset pin>;
+
+endmodule
+DECL 0 1542643852
+(*__std = "reset"*) 
+module Reset(val);
+	output wire val;
+endmodule
+PARSE 0 1542643852
+
+// An arbitrary width source of binary inputs
+(*__std="pad"*)
+module Pad#(
+  parameter WIDTH = 4
+)(
+  output wire[WIDTH-1:0] val
+);
+
+  // Possible Implementation:
+  //
+  // output wire[WIDTH-1:0] val = <pad pins>;
+
+endmodule
+DECL 0 1542643852
+(*__std = "pad"*) 
+module Pad(val);
+	parameter WIDTH = 4;
+	output wire[WIDTH - 1:0] val;
+endmodule
+PARSE 0 1542643852
+
+// An arbitrary width source of binary outputs
+(*__std="led"*)
+module Led#(
+  parameter WIDTH = 8
+)(
+  input wire[WIDTH-1:0] val
+);
+
+  // Possible Implementation:
+  //
+  // input wire[WIDTH-1:0] val;
+  // assign <led pins> = val;
+
+endmodule
+DECL 0 1542643852
+(*__std = "led"*) 
+module Led(val);
+	parameter WIDTH = 8;
+	input wire[WIDTH - 1:0] val;
+endmodule
+PARSE 0 1542643852
+
+// An arbitrary width source of binary outputs
+(*__std="gpio"*)
+module Gpio#(
+  parameter WIDTH = 8
+)(
+  input wire[WIDTH-1:0] val
+);
+
+  // Possible Implementation:
+  //
+  // input wire[WIDTH-1:0] val;
+  // assign <gpio pins> = val;
+
+endmodule
+DECL 0 1542643852
+(*__std = "gpio"*) 
+module Gpio(val);
+	parameter WIDTH = 8;
+	input wire[WIDTH - 1:0] val;
+endmodule
+PARSE 0 1542643852
+
+///////////////////////////////////////////////////////////////////////////////
+// Reusable Data-Structures:
+///////////////////////////////////////////////////////////////////////////////
+
+// An dual-port-read single-port-write memory with arbitrary size and byte
+// width.  Supports additional annotations below:
+// 
+// __file = "..."
+//   Optional. If specified the contents of this memory will be read/written
+//   from/to this file when the program begins/finishes executing.
+(*__std="memory",__target="sw"*)
+module Memory#(
+  parameter ADDR_SIZE = 4,
+  parameter BYTE_SIZE = 8
+)(
+  input  wire clock,
+  input  wire wen,
+  input  wire[ADDR_SIZE-1:0] raddr1,
+  output wire[BYTE_SIZE-1:0] rdata1,
+  input  wire[ADDR_SIZE-1:0] raddr2,
+  output wire[BYTE_SIZE-1:0] rdata2,
+  input  wire[ADDR_SIZE-1:0] waddr,
+  input  wire[BYTE_SIZE-1:0] wdata
+);
+
+  // Possible Implementation:
+  //
+  // input wire clock;
+  // input wire wen;
+  // input wire[ADDR_SIZE-1:0] raddr1;
+  // input wire[ADDR_SIZE-1:0] raddr2;
+  // input wire[ADDR_SIZE-1:0] waddr;
+  // input wire[BYTE_SIZE-1:0] wdata;
+  //
+  // output wire[BYTE_SIZE-1:0] rdata1;
+  // output wire[BYTE_SIZE-1:0] rdata2;
+
+  // reg[BYTE_SIZE-1:0] mem[ADDR_SIZE-1:0];
+  // assign rdata1 = mem[raddr1];
+  // assign rdata2 = mem[raddr2];
+  // always @(posedge clock) begin
+  //   if (wen) begin 
+  //     mem[waddr] <= wdata;
+  //   end
+  // end
+
+endmodule
+DECL 0 1542643852
+(*__std = "memory",__target = "sw"*) 
+module Memory(clock,wen,raddr1,rdata1,raddr2,rdata2,waddr,wdata);
+	parameter ADDR_SIZE = 4;
+	parameter BYTE_SIZE = 8;
+	input wire clock;
+	input wire wen;
+	input wire[ADDR_SIZE - 1:0] raddr1;
+	output wire[BYTE_SIZE - 1:0] rdata1;
+	input wire[ADDR_SIZE - 1:0] raddr2;
+	output wire[BYTE_SIZE - 1:0] rdata2;
+	input wire[ADDR_SIZE - 1:0] waddr;
+	input wire[BYTE_SIZE - 1:0] wdata;
+endmodule
+PARSE 0 1542643852
+
+// A bounded-depth read/write fifo. Supports additional annotations below.
+// Attempting to write a new value into a full fifo or to read a value from
+// an empty fifo will result in undefined behavor.
+//
+// __file = "..."
+//   Optional. If specified this fifo will be initialized with values taken
+//   from this file. If there are more values in this file than the fifo's
+//   maximum depth, this fifo will continue to pull values from the file until
+//   it is exhausted.
+// __count = "..."
+//   Optional. If specifid along with __file, this fifo will be initialized
+//   with 'count' copies of the data in __file.
+(*__std="fifo",__target="sw"*)
+module Fifo#(
+  parameter DEPTH = 8,
+  parameter BYTE_SIZE = 8
+)(
+  input  wire clock,
+  input  wire rreq,
+  output wire[BYTE_SIZE-1:0] rdata,
+  input  wire wreq,
+  input  wire[BYTE_SIZE-1:0] wdata,
+  output wire empty,
+  output wire full
+);
+
+  // Possible Implementation:
+  //
+  // input wire rreq;
+  // input wire wreq;
+  // input wire[BYTE_SIZE-1:0] wdata;
+  //
+  // reg[BYTE_SIZE-1:0] fifo[log(DEPTH)-1:0];
+  // reg[log(DEPTH)-1:0] head = 0;
+  // reg[log(DEPTH)-1:0] tail = 1;
+  //
+  // output wire[BYTE_SIZE-1:0] rdata = fifo[head];
+  // output wire empty = (head+1 == tail) & <file empty>;
+  // output wire full = (head == tail) | !<file empty>;
+  //
+  // initial <fill from file until full or file empty>;
+  //
+  // always @(posedge clock) begin
+  //   if (rreq) begin
+  //     head <= head+1;
+  //   end
+  //   if (wreq) begin 
+  //     fifo[tail] <= wdata;
+  //     tail <= tail+1;
+  //   end
+  //   if (!<file empty>) begin
+  //     fifo[tail] <= <next file data>;
+  //     tail <= tail+1;  
+  //   end
+  // end
+
+endmodule
+DECL 0 1542643852
+(*__std = "fifo",__target = "sw"*) 
+module Fifo(clock,rreq,rdata,wreq,wdata,empty,full);
+	parameter DEPTH = 8;
+	parameter BYTE_SIZE = 8;
+	input wire clock;
+	input wire rreq;
+	output wire[BYTE_SIZE - 1:0] rdata;
+	input wire wreq;
+	input wire[BYTE_SIZE - 1:0] wdata;
+	output wire empty;
+	output wire full;
+endmodule
+PARSE 0 1542643852
+
+PARSE 0 1542643852
+
+
+(*__target="sw", __loc="runtime"*)
+Root root();
+ITEM 0 1542643852
+(*__std = "logic",__target = "sw",__loc = "runtime"*) 
+module Root();
+endmodule
+PARSE 0 1542643852
+
+
+(*__target="sw", __loc="runtime"*)                    
+Clock clock();
+ITEM 0 1542643852
+(*__std = "logic",__target = "sw",__loc = "runtime"*) 
+module Root();
+	(*__target = "sw",__loc = "runtime"*) 
+	Clock clock();
+endmodule
+PARSE 0 1542643852
+
+
+PARSE 14189 1542643852
+include time.v;
+PARSE 14189 1542643852
+include constants.v;
+PARSE 14189 1542643852
+// DO NOT EDIT THIS FILE... LIKE... AT ALL!
+
+// Number of input pairs
+localparam NUM_INPUTS = 1000;
+ITEM 14189 1542643852
+(*__std = "logic",__target = "sw",__loc = "runtime"*) 
+module Root();
+	(*__target = "sw",__loc = "runtime"*) 
+	Clock clock();
+	localparam NUM_INPUTS = 1000;
+endmodule
+PARSE 14189 1542643852
+
+// Number of characters per input
+localparam LENGTH = 8;
+ITEM 14189 1542643852
+(*__std = "logic",__target = "sw",__loc = "runtime"*) 
+module Root();
+	(*__target = "sw",__loc = "runtime"*) 
+	Clock clock();
+	localparam NUM_INPUTS = 1000;
+	localparam LENGTH = 8;
+endmodule
+PARSE 14189 1542643852
+
+// Number of bits per character
+localparam CWIDTH = 2;
+ITEM 14189 1542643852
+(*__std = "logic",__target = "sw",__loc = "runtime"*) 
+module Root();
+	(*__target = "sw",__loc = "runtime"*) 
+	Clock clock();
+	localparam NUM_INPUTS = 1000;
+	localparam LENGTH = 8;
+	localparam CWIDTH = 2;
+endmodule
+PARSE 14189 1542643852
+
+
+// Character constants
+localparam[CWIDTH-1:0] A = 2'b00;
+ITEM 14189 1542643852
+(*__std = "logic",__target = "sw",__loc = "runtime"*) 
+module Root();
+	(*__target = "sw",__loc = "runtime"*) 
+	Clock clock();
+	localparam NUM_INPUTS = 1000;
+	localparam LENGTH = 8;
+	localparam CWIDTH = 2;
+	localparam[CWIDTH - 1:0] A = 2'b0;
+endmodule
+PARSE 14189 1542643852
+
+localparam[CWIDTH-1:0] C = 2'b01;
+ITEM 14189 1542643852
+(*__std = "logic",__target = "sw",__loc = "runtime"*) 
+module Root();
+	(*__target = "sw",__loc = "runtime"*) 
+	Clock clock();
+	localparam NUM_INPUTS = 1000;
+	localparam LENGTH = 8;
+	localparam CWIDTH = 2;
+	localparam[CWIDTH - 1:0] A = 2'b0;
+	localparam[CWIDTH - 1:0] C = 2'b1;
+endmodule
+PARSE 14189 1542643852
+
+localparam[CWIDTH-1:0] G = 2'b10;
+ITEM 14189 1542643852
+(*__std = "logic",__target = "sw",__loc = "runtime"*) 
+module Root();
+	(*__target = "sw",__loc = "runtime"*) 
+	Clock clock();
+	localparam NUM_INPUTS = 1000;
+	localparam LENGTH = 8;
+	localparam CWIDTH = 2;
+	localparam[CWIDTH - 1:0] A = 2'b0;
+	localparam[CWIDTH - 1:0] C = 2'b1;
+	localparam[CWIDTH - 1:0] G = 2'b10;
+endmodule
+PARSE 14189 1542643852
+
+localparam[CWIDTH-1:0] T = 2'b11;
+ITEM 14189 1542643852
+(*__std = "logic",__target = "sw",__loc = "runtime"*) 
+module Root();
+	(*__target = "sw",__loc = "runtime"*) 
+	Clock clock();
+	localparam NUM_INPUTS = 1000;
+	localparam LENGTH = 8;
+	localparam CWIDTH = 2;
+	localparam[CWIDTH - 1:0] A = 2'b0;
+	localparam[CWIDTH - 1:0] C = 2'b1;
+	localparam[CWIDTH - 1:0] G = 2'b10;
+	localparam[CWIDTH - 1:0] T = 2'b11;
+endmodule
+PARSE 14189 1542643852
+
+
+// Number of bits per score
+localparam SWIDTH = 16;
+ITEM 14189 1542643852
+(*__std = "logic",__target = "sw",__loc = "runtime"*) 
+module Root();
+	(*__target = "sw",__loc = "runtime"*) 
+	Clock clock();
+	localparam NUM_INPUTS = 1000;
+	localparam LENGTH = 8;
+	localparam CWIDTH = 2;
+	localparam[CWIDTH - 1:0] A = 2'b0;
+	localparam[CWIDTH - 1:0] C = 2'b1;
+	localparam[CWIDTH - 1:0] G = 2'b10;
+	localparam[CWIDTH - 1:0] T = 2'b11;
+	localparam SWIDTH = 16;
+endmodule
+PARSE 14189 1542643852
+
+
+// Scoring constants
+localparam signed[SWIDTH-1:0] MATCH = 1;
+ITEM 14189 1542643852
+(*__std = "logic",__target = "sw",__loc = "runtime"*) 
+module Root();
+	(*__target = "sw",__loc = "runtime"*) 
+	Clock clock();
+	localparam NUM_INPUTS = 1000;
+	localparam LENGTH = 8;
+	localparam CWIDTH = 2;
+	localparam[CWIDTH - 1:0] A = 2'b0;
+	localparam[CWIDTH - 1:0] C = 2'b1;
+	localparam[CWIDTH - 1:0] G = 2'b10;
+	localparam[CWIDTH - 1:0] T = 2'b11;
+	localparam SWIDTH = 16;
+	localparam signed[SWIDTH - 1:0] MATCH = 1;
+endmodule
+PARSE 14189 1542643852
+
+localparam signed[SWIDTH-1:0] INDEL = -1;
+ITEM 14189 1542643852
+(*__std = "logic",__target = "sw",__loc = "runtime"*) 
+module Root();
+	(*__target = "sw",__loc = "runtime"*) 
+	Clock clock();
+	localparam NUM_INPUTS = 1000;
+	localparam LENGTH = 8;
+	localparam CWIDTH = 2;
+	localparam[CWIDTH - 1:0] A = 2'b0;
+	localparam[CWIDTH - 1:0] C = 2'b1;
+	localparam[CWIDTH - 1:0] G = 2'b10;
+	localparam[CWIDTH - 1:0] T = 2'b11;
+	localparam SWIDTH = 16;
+	localparam signed[SWIDTH - 1:0] MATCH = 1;
+	localparam signed[SWIDTH - 1:0] INDEL = -1;
+endmodule
+PARSE 14189 1542643852
+
+localparam signed[SWIDTH-1:0] MISMATCH = -1;
+ITEM 14189 1542643852
+(*__std = "logic",__target = "sw",__loc = "runtime"*) 
+module Root();
+	(*__target = "sw",__loc = "runtime"*) 
+	Clock clock();
+	localparam NUM_INPUTS = 1000;
+	localparam LENGTH = 8;
+	localparam CWIDTH = 2;
+	localparam[CWIDTH - 1:0] A = 2'b0;
+	localparam[CWIDTH - 1:0] C = 2'b1;
+	localparam[CWIDTH - 1:0] G = 2'b10;
+	localparam[CWIDTH - 1:0] T = 2'b11;
+	localparam SWIDTH = 16;
+	localparam signed[SWIDTH - 1:0] MATCH = 1;
+	localparam signed[SWIDTH - 1:0] INDEL = -1;
+	localparam signed[SWIDTH - 1:0] MISMATCH = -1;
+endmodule
+PARSE 14189 1542643852
+
+
+PARSE 14189 1542643852
+
+include nw.v;
+PARSE 14189 1542643852
+// Grid Elements:
+module Elem#(
+// you may have similar parameters as the top level module here...
+  // Number of bits per character
+  parameter CWIDTH = 2,
+  // Number of bits per score
+  parameter SWIDTH = 16,
+  // Weights
+  parameter signed MATCH = 1,
+  parameter signed INDEL = -1,
+  parameter signed MISMATCH = -1
+)(
+//...
+  input wire signed[SWIDTH-1:0] left,
+  input wire signed[SWIDTH-1:0] topLeft,
+  input wire signed[SWIDTH-1:0] top,
+  input wire signed[CWIDTH-1:0] c1,
+  input wire signed[CWIDTH-1:0] c2,
+  output wire signed[SWIDTH-1:0] out
+);
+  wire signed[SWIDTH-1:0] Left, TopLeft, Top, inter, match;
+    assign match = (c1 == c2) ? MATCH : MISMATCH;
+    assign Left = left + INDEL;
+    assign TopLeft = topLeft + match;
+    assign Top = top + INDEL;
+    assign inter = (Left > TopLeft) ? Left : TopLeft;
+    assign out = (inter > Top) ? inter : Top;
+endmodule
+DECL 14189 1542643852
+(*__std = "logic"*) 
+module Elem(left,topLeft,top,c1,c2,out);
+	parameter CWIDTH = 2;
+	parameter SWIDTH = 16;
+	parameter signed MATCH = 1;
+	parameter signed INDEL = -1;
+	parameter signed MISMATCH = -1;
+	input wire signed[SWIDTH - 1:0] left;
+	input wire signed[SWIDTH - 1:0] topLeft;
+	input wire signed[SWIDTH - 1:0] top;
+	input wire signed[CWIDTH - 1:0] c1;
+	input wire signed[CWIDTH - 1:0] c2;
+	output wire signed[SWIDTH - 1:0] out;
+	wire signed[SWIDTH - 1:0] Left;
+	wire signed[SWIDTH - 1:0] TopLeft;
+	wire signed[SWIDTH - 1:0] Top;
+	wire signed[SWIDTH - 1:0] inter;
+	wire signed[SWIDTH - 1:0] match;
+	assign match = (c1 == c2) ? MATCH : MISMATCH;
+	assign Left = left + INDEL;
+	assign TopLeft = topLeft + match;
+	assign Top = top + INDEL;
+	assign inter = (Left > TopLeft) ? Left : TopLeft;
+	assign out = (inter > Top) ? inter : Top;
+endmodule
+PARSE 14189 1542643852
+
+// Grid:
+module Grid#(
+  // Number of characters per string
+  parameter LENGTH = 10,
+  // Number of bits per character
+  parameter CWIDTH = 2,
+  // Number of bits per score
+  parameter SWIDTH = 16,
+  // Weights
+  parameter signed MATCH = 1,
+  parameter signed INDEL = -1,
+  parameter signed MISMATCH = -1
+)(
+  // Clock
+  input wire clk,
+  // Input strings
+  input wire signed[LENGTH*CWIDTH-1:0] s1,
+  input wire signed[LENGTH*CWIDTH-1:0] s2,
+  input wire valid,
+  // Match score
+  output wire signed[SWIDTH-1:0] score,
+  output wire done
+);
+  reg signed[SWIDTH-1:0] ris[(LENGTH)*(LENGTH)-1:0];
+  reg[SWIDTH-1:0] numCycles = 0;
+  genvar i;
+  for (i = 0; i < LENGTH*LENGTH; i = i + 1) begin : GridElems
+    wire signed[SWIDTH-1:0] xi, left, topLeft, top;
+    wire[LENGTH:0] row, col;
+    wire[CWIDTH-1:0] c1, c2;
+    assign col = i % LENGTH;
+    assign row = i / LENGTH;
+    // getting left
+    assign left = (col == 0) ? -(i/LENGTH + 1) : ris[i-1];
+    // getting topLeft
+    assign topLeft = (row == 0) ? -(col)
+                     : (col == 0) ? -(row)
+                     : ris[i -LENGTH - 1];
+
+    // getting top
+    assign top = (row == 0) ? -(i+1) : ris[i-LENGTH];
+    // getting c1
+    assign c1 = s1[((i%LENGTH)+1)*CWIDTH - 1:((i%LENGTH)*CWIDTH)];
+    // getting c2
+    assign c2 = s2[((i/LENGTH)+1)*CWIDTH - 1:((i/LENGTH)*CWIDTH)];
+    Elem#(
+      .CWIDTH(CWIDTH),
+      .SWIDTH(SWIDTH),
+      .MATCH(MATCH),
+      .INDEL(INDEL),
+      .MISMATCH(MISMATCH)
+    ) elem(left, topLeft, top, c1, c2, xi);
+
+    assign done = numCycles == LENGTH;
+
+    always @(posedge clk) begin
+      if (valid) begin
+        ris[i] <= xi;
+        numCycles <= numCycles + 1;
+      end
+    end
+      
+
+    // getting 
+  end
+
+
+// ...
+// you may find genvar and generate statements to be VERY useful here. 
+endmodule
+DECL 14189 1542643852
+(*__std = "logic"*) 
+module Grid(clk,s1,s2,valid,score,done);
+	parameter LENGTH = 10;
+	parameter CWIDTH = 2;
+	parameter SWIDTH = 16;
+	parameter signed MATCH = 1;
+	parameter signed INDEL = -1;
+	parameter signed MISMATCH = -1;
+	input wire clk;
+	input wire signed[LENGTH * CWIDTH - 1:0] s1;
+	input wire signed[LENGTH * CWIDTH - 1:0] s2;
+	input wire valid;
+	output wire signed[SWIDTH - 1:0] score;
+	output wire done;
+	reg signed[SWIDTH - 1:0] ris[(LENGTH) * (LENGTH) - 1:0];
+	reg[SWIDTH - 1:0] numCycles = 0;
+	genvar i;
+	for (i = 0; i < LENGTH * LENGTH; i = i + 1) begin : GridElems
+		wire signed[SWIDTH - 1:0] xi;
+		wire signed[SWIDTH - 1:0] left;
+		wire signed[SWIDTH - 1:0] topLeft;
+		wire signed[SWIDTH - 1:0] top;
+		wire[LENGTH:0] row;
+		wire[LENGTH:0] col;
+		wire[CWIDTH - 1:0] c1;
+		wire[CWIDTH - 1:0] c2;
+		assign col = i % LENGTH;
+		assign row = i / LENGTH;
+		assign left = (col == 0) ? -(i / LENGTH + 1) : ris[i - 1];
+		assign topLeft = (row == 0) ? -(col) : (col == 0) ? -(row) : ris[i - LENGTH - 1];
+		assign top = (row == 0) ? -(i + 1) : ris[i - LENGTH];
+		assign c1 = s1[((i % LENGTH) + 1) * CWIDTH - 1:((i % LENGTH) * CWIDTH)];
+		assign c2 = s2[((i / LENGTH) + 1) * CWIDTH - 1:((i / LENGTH) * CWIDTH)];
+		Elem #(.CWIDTH(CWIDTH),.SWIDTH(SWIDTH),.MATCH(MATCH),.INDEL(INDEL),.MISMATCH(MISMATCH)) elem(left,topLeft,top,c1,c2,xi);
+		assign done = numCycles == LENGTH;
+		always @(posedge clk) begin
+			if (valid) begin
+				ris[i] <= xi;
+				numCycles <= numCycles + 1;
+			end 
+		end 
+	end 
+endmodule
+PARSE 14189 1542643852
+
+PARSE 14189 1542643852
+
+
+// We're going to use a hard-wired length here
+localparam HLENGTH = 8;
+ITEM 14189 1542643852
+(*__std = "logic",__target = "sw",__loc = "runtime"*) 
+module Root();
+	(*__target = "sw",__loc = "runtime"*) 
+	Clock clock();
+	localparam NUM_INPUTS = 1000;
+	localparam LENGTH = 8;
+	localparam CWIDTH = 2;
+	localparam[CWIDTH - 1:0] A = 2'b0;
+	localparam[CWIDTH - 1:0] C = 2'b1;
+	localparam[CWIDTH - 1:0] G = 2'b10;
+	localparam[CWIDTH - 1:0] T = 2'b11;
+	localparam SWIDTH = 16;
+	localparam signed[SWIDTH - 1:0] MATCH = 1;
+	localparam signed[SWIDTH - 1:0] INDEL = -1;
+	localparam signed[SWIDTH - 1:0] MISMATCH = -1;
+	localparam HLENGTH = 8;
+endmodule
+PARSE 14189 1542643852
+
+
+// Instantiate compute grid with hard-wired inputs 
+wire [HLENGTH*CWIDTH-1:0] s1 = {HLENGTH{A}};
+ITEM 14189 1542643852
+(*__std = "logic",__target = "sw",__loc = "runtime"*) 
+module Root();
+	(*__target = "sw",__loc = "runtime"*) 
+	Clock clock();
+	localparam NUM_INPUTS = 1000;
+	localparam LENGTH = 8;
+	localparam CWIDTH = 2;
+	localparam[CWIDTH - 1:0] A = 2'b0;
+	localparam[CWIDTH - 1:0] C = 2'b1;
+	localparam[CWIDTH - 1:0] G = 2'b10;
+	localparam[CWIDTH - 1:0] T = 2'b11;
+	localparam SWIDTH = 16;
+	localparam signed[SWIDTH - 1:0] MATCH = 1;
+	localparam signed[SWIDTH - 1:0] INDEL = -1;
+	localparam signed[SWIDTH - 1:0] MISMATCH = -1;
+	localparam HLENGTH = 8;
+	wire[HLENGTH * CWIDTH - 1:0] s1;
+endmodule
+ITEM 14189 1542643852
+(*__std = "logic",__target = "sw",__loc = "runtime"*) 
+module Root();
+	(*__target = "sw",__loc = "runtime"*) 
+	Clock clock();
+	localparam NUM_INPUTS = 1000;
+	localparam LENGTH = 8;
+	localparam CWIDTH = 2;
+	localparam[CWIDTH - 1:0] A = 2'b0;
+	localparam[CWIDTH - 1:0] C = 2'b1;
+	localparam[CWIDTH - 1:0] G = 2'b10;
+	localparam[CWIDTH - 1:0] T = 2'b11;
+	localparam SWIDTH = 16;
+	localparam signed[SWIDTH - 1:0] MATCH = 1;
+	localparam signed[SWIDTH - 1:0] INDEL = -1;
+	localparam signed[SWIDTH - 1:0] MISMATCH = -1;
+	localparam HLENGTH = 8;
+	wire[HLENGTH * CWIDTH - 1:0] s1;
+	assign s1 = {HLENGTH {A}};
+endmodule
+PARSE 14189 1542643852
+
+wire [HLENGTH*CWIDTH-1:0] s2 = {HLENGTH{G}};
+ITEM 14189 1542643852
+(*__std = "logic",__target = "sw",__loc = "runtime"*) 
+module Root();
+	(*__target = "sw",__loc = "runtime"*) 
+	Clock clock();
+	localparam NUM_INPUTS = 1000;
+	localparam LENGTH = 8;
+	localparam CWIDTH = 2;
+	localparam[CWIDTH - 1:0] A = 2'b0;
+	localparam[CWIDTH - 1:0] C = 2'b1;
+	localparam[CWIDTH - 1:0] G = 2'b10;
+	localparam[CWIDTH - 1:0] T = 2'b11;
+	localparam SWIDTH = 16;
+	localparam signed[SWIDTH - 1:0] MATCH = 1;
+	localparam signed[SWIDTH - 1:0] INDEL = -1;
+	localparam signed[SWIDTH - 1:0] MISMATCH = -1;
+	localparam HLENGTH = 8;
+	wire[HLENGTH * CWIDTH - 1:0] s1;
+	assign s1 = {HLENGTH {A}};
+	wire[HLENGTH * CWIDTH - 1:0] s2;
+endmodule
+ITEM 14189 1542643852
+(*__std = "logic",__target = "sw",__loc = "runtime"*) 
+module Root();
+	(*__target = "sw",__loc = "runtime"*) 
+	Clock clock();
+	localparam NUM_INPUTS = 1000;
+	localparam LENGTH = 8;
+	localparam CWIDTH = 2;
+	localparam[CWIDTH - 1:0] A = 2'b0;
+	localparam[CWIDTH - 1:0] C = 2'b1;
+	localparam[CWIDTH - 1:0] G = 2'b10;
+	localparam[CWIDTH - 1:0] T = 2'b11;
+	localparam SWIDTH = 16;
+	localparam signed[SWIDTH - 1:0] MATCH = 1;
+	localparam signed[SWIDTH - 1:0] INDEL = -1;
+	localparam signed[SWIDTH - 1:0] MISMATCH = -1;
+	localparam HLENGTH = 8;
+	wire[HLENGTH * CWIDTH - 1:0] s1;
+	assign s1 = {HLENGTH {A}};
+	wire[HLENGTH * CWIDTH - 1:0] s2;
+	assign s2 = {HLENGTH {G}};
+endmodule
+PARSE 14189 1542643852
+
+wire done;
+ITEM 14189 1542643852
+(*__std = "logic",__target = "sw",__loc = "runtime"*) 
+module Root();
+	(*__target = "sw",__loc = "runtime"*) 
+	Clock clock();
+	localparam NUM_INPUTS = 1000;
+	localparam LENGTH = 8;
+	localparam CWIDTH = 2;
+	localparam[CWIDTH - 1:0] A = 2'b0;
+	localparam[CWIDTH - 1:0] C = 2'b1;
+	localparam[CWIDTH - 1:0] G = 2'b10;
+	localparam[CWIDTH - 1:0] T = 2'b11;
+	localparam SWIDTH = 16;
+	localparam signed[SWIDTH - 1:0] MATCH = 1;
+	localparam signed[SWIDTH - 1:0] INDEL = -1;
+	localparam signed[SWIDTH - 1:0] MISMATCH = -1;
+	localparam HLENGTH = 8;
+	wire[HLENGTH * CWIDTH - 1:0] s1;
+	assign s1 = {HLENGTH {A}};
+	wire[HLENGTH * CWIDTH - 1:0] s2;
+	assign s2 = {HLENGTH {G}};
+	wire done;
+endmodule
+PARSE 14189 1542643852
+
+Grid#(
+  .LENGTH(HLENGTH),
+  .CWIDTH(CWIDTH),
+  .SWIDTH(SWIDTH),
+  .MATCH(MATCH),
+  .INDEL(INDEL),
+  .MISMATCH(MISMATCH) 
+) grid (
+  .clk(clock.val),
+  .s1(s1),
+  .s2(s2),
+  .valid(1),
+  .done(done)
+);
+ITEM 14189 1542643852
+(*__std = "logic",__target = "sw",__loc = "runtime"*) 
+module Root();
+	(*__target = "sw",__loc = "runtime"*) 
+	Clock clock();
+	localparam NUM_INPUTS = 1000;
+	localparam LENGTH = 8;
+	localparam CWIDTH = 2;
+	localparam[CWIDTH - 1:0] A = 2'b0;
+	localparam[CWIDTH - 1:0] C = 2'b1;
+	localparam[CWIDTH - 1:0] G = 2'b10;
+	localparam[CWIDTH - 1:0] T = 2'b11;
+	localparam SWIDTH = 16;
+	localparam signed[SWIDTH - 1:0] MATCH = 1;
+	localparam signed[SWIDTH - 1:0] INDEL = -1;
+	localparam signed[SWIDTH - 1:0] MISMATCH = -1;
+	localparam HLENGTH = 8;
+	wire[HLENGTH * CWIDTH - 1:0] s1;
+	assign s1 = {HLENGTH {A}};
+	wire[HLENGTH * CWIDTH - 1:0] s2;
+	assign s2 = {HLENGTH {G}};
+	wire done;
+	Grid #(.LENGTH(HLENGTH),.CWIDTH(CWIDTH),.SWIDTH(SWIDTH),.MATCH(MATCH),.INDEL(INDEL),.MISMATCH(MISMATCH)) grid(.clk(clock.val),.s1(s1),.s2(s2),.valid(1),.done(done));
+endmodule
+PARSE 14189 1542643852
+
+
+// Count the number of cycles taken
+reg [31:0] count = 1;
+ITEM 14189 1542643852
+(*__std = "logic",__target = "sw",__loc = "runtime"*) 
+module Root();
+	(*__target = "sw",__loc = "runtime"*) 
+	Clock clock();
+	localparam NUM_INPUTS = 1000;
+	localparam LENGTH = 8;
+	localparam CWIDTH = 2;
+	localparam[CWIDTH - 1:0] A = 2'b0;
+	localparam[CWIDTH - 1:0] C = 2'b1;
+	localparam[CWIDTH - 1:0] G = 2'b10;
+	localparam[CWIDTH - 1:0] T = 2'b11;
+	localparam SWIDTH = 16;
+	localparam signed[SWIDTH - 1:0] MATCH = 1;
+	localparam signed[SWIDTH - 1:0] INDEL = -1;
+	localparam signed[SWIDTH - 1:0] MISMATCH = -1;
+	localparam HLENGTH = 8;
+	wire[HLENGTH * CWIDTH - 1:0] s1;
+	assign s1 = {HLENGTH {A}};
+	wire[HLENGTH * CWIDTH - 1:0] s2;
+	assign s2 = {HLENGTH {G}};
+	wire done;
+	Grid #(.LENGTH(HLENGTH),.CWIDTH(CWIDTH),.SWIDTH(SWIDTH),.MATCH(MATCH),.INDEL(INDEL),.MISMATCH(MISMATCH)) grid(.clk(clock.val),.s1(s1),.s2(s2),.valid(1),.done(done));
+	reg[31:0] count = 1;
+endmodule
+PARSE 14189 1542643852
+
+always @(posedge clock.val) begin
+  if (done) begin
+    $display("Final cycle count: %d cycles", count);
+    $finish;
+  end
+  count <= (count + 1);
+end
+ITEM 14189 1542643852
+(*__std = "logic",__target = "sw",__loc = "runtime"*) 
+module Root();
+	(*__target = "sw",__loc = "runtime"*) 
+	Clock clock();
+	localparam NUM_INPUTS = 1000;
+	localparam LENGTH = 8;
+	localparam CWIDTH = 2;
+	localparam[CWIDTH - 1:0] A = 2'b0;
+	localparam[CWIDTH - 1:0] C = 2'b1;
+	localparam[CWIDTH - 1:0] G = 2'b10;
+	localparam[CWIDTH - 1:0] T = 2'b11;
+	localparam SWIDTH = 16;
+	localparam signed[SWIDTH - 1:0] MATCH = 1;
+	localparam signed[SWIDTH - 1:0] INDEL = -1;
+	localparam signed[SWIDTH - 1:0] MISMATCH = -1;
+	localparam HLENGTH = 8;
+	wire[HLENGTH * CWIDTH - 1:0] s1;
+	assign s1 = {HLENGTH {A}};
+	wire[HLENGTH * CWIDTH - 1:0] s2;
+	assign s2 = {HLENGTH {G}};
+	wire done;
+	Grid #(.LENGTH(HLENGTH),.CWIDTH(CWIDTH),.SWIDTH(SWIDTH),.MATCH(MATCH),.INDEL(INDEL),.MISMATCH(MISMATCH)) grid(.clk(clock.val),.s1(s1),.s2(s2),.valid(1),.done(done));
+	reg[31:0] count = 1;
+	always @(posedge clock.val) begin
+		if (done) begin
+			$display("Final cycle count: %d cycles",count);
+			$finish(0);
+		end 
+		count <= (count + 1);
+	end 
+endmodule
+PARSE 14189 1542643852
+
+PARSE 14189 1542643852
+
+WARN 14189 1542643853
+*** Typechecker Warning:
+  > In <unknown location --- please submit bug report> on line 0:
+    Array subscript is out of range of declared dimension for this variable: i - 1
+  > In <unknown location --- please submit bug report> on line 0:
+    Array subscript is out of range of declared dimension for this variable: i - LENGTH - 1
+  > In <unknown location --- please submit bug report> on line 0:
+    Array subscript is out of range of declared dimension for this variable: i - LENGTH
+  > In <unknown location --- please submit bug report> on line 0:
+    Array subscript is out of range of declared dimension for this variable: i - LENGTH - 1
+  > In <unknown location --- please submit bug report> on line 0:
+    Array subscript is out of range of declared dimension for this variable: i - LENGTH
+  > In <unknown location --- please submit bug report> on line 0:
+    Array subscript is out of range of declared dimension for this variable: i - LENGTH - 1
+  > In <unknown location --- please submit bug report> on line 0:
+    Array subscript is out of range of declared dimension for this variable: i - LENGTH
+  > In <unknown location --- please submit bug report> on line 0:
+    Array subscript is out of range of declared dimension for this variable: i - LENGTH - 1
+  > In <unknown location --- please submit bug report> on line 0:
+    Array subscript is out of range of declared dimension for this variable: i - LENGTH
+  > In <unknown location --- please submit bug report> on line 0:
+    Array subscript is out of range of declared dimension for this variable: i - LENGTH - 1
+  > In <unknown location --- please submit bug report> on line 0:
+    Array subscript is out of range of declared dimension for this variable: i - LENGTH
+  > In <unknown location --- please submit bug report> on line 0:
+    Array subscript is out of range of declared dimension for this variable: i - LENGTH - 1
+  > In <unknown location --- please submit bug report> on line 0:
+    Array subscript is out of range of declared dimension for this variable: i - LENGTH
+  > In <unknown location --- please submit bug report> on line 0:
+    Array subscript is out of range of declared dimension for this variable: i - LENGTH - 1
+  > In <unknown location --- please submit bug report> on line 0:
+    Array subscript is out of range of declared dimension for this variable: i - LENGTH
+  > In <unknown location --- please submit bug report> on line 0:
+    Array subscript is out of range of declared dimension for this variable: i - LENGTH - 1
+  > In <unknown location --- please submit bug report> on line 0:
+    Array subscript is out of range of declared dimension for this variable: i - LENGTH
+  > In <unknown location --- please submit bug report> on line 0:
+    Array subscript is out of range of declared dimension for this variable: i - LENGTH - 1
+PRINT 14205 1542643853
+Final cycle count: 9 cycles
+
+SHUTDOWN 14207 1542643853
