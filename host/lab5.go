@@ -7,20 +7,28 @@ import (
 	//    "os"
 	//    "strings"
 	"strconv"
-	//    "time"
-	//    "sync"
+	"sync"
+	"time"
 )
 
 type Matrix struct {
-	s1   string
-	s2   string
-	vals [][]int
-	prev [][]int
+	s1    string
+	s2    string
+	vals  [][]int
+	prev  [][]int
+	chans [][]chan int
 }
 
 func createMatrix(s1 string, s2 string) *Matrix {
 	vals := make([][]int, len(s1)+1)
 	prev := make([][]int, len(s1)+1)
+	chans := make([][]chan int, len(s1)+1)
+	for i := 0; i < len(s1)+1; i += 1 {
+		chans[i] = make([]chan int, len(s2)+1)
+		for j := 0; j < len(s2)+1; j += 1 {
+			chans[i][j] = make(chan int)
+		}
+	}
 	for i := 0; i < len(s1)+1; i += 1 {
 		prev[i] = make([]int, len(s2)+1)
 	}
@@ -35,13 +43,13 @@ func createMatrix(s1 string, s2 string) *Matrix {
 		vals[0][i] = -i
 		prev[0][i] = 2
 	}
-	return &Matrix{s1, s2, vals, prev}
+	return &Matrix{s1, s2, vals, prev, chans}
 }
 
 func (this Matrix) String() string {
 	result := ",,"
 	for i := 0; i < len(this.s2); i += 1 {
-		result += string(this.s2[i]) + ","
+		result += "   " + string(this.s2[i]) + ","
 	}
 	result += "\n"
 	w1 := "," + this.s1
@@ -76,6 +84,46 @@ func max(a, b, c int) (int, int) {
 		ind = 2
 	}
 	return ind, result
+}
+
+func (this *Matrix) routine(i, j int, wg *sync.WaitGroup) {
+	if i == 0 {
+		this.vals[i][j] = -j
+	} else if j == 0 {
+		this.vals[i][j] = -i
+	} else {
+		local_store := 1
+		if this.s1[i-1] == this.s2[j-1] {
+			local_store = 1
+		} else {
+			local_store = -1
+		}
+		// fmt.Println(local_store)
+		top := (<-this.chans[i][j-1]) - 1
+		topLeft := (<-this.chans[i-1][j-1]) + local_store
+		left := (<-this.chans[i-1][j]) - 1
+		ind, v := max(topLeft, left, top)
+		this.vals[i][j] = v
+		this.prev[i][j] = ind
+	}
+	wg.Done()
+	this.chans[i][j] <- this.vals[i][j]
+	this.chans[i][j] <- this.vals[i][j]
+	this.chans[i][j] <- this.vals[i][j]
+}
+
+func (this *Matrix) parallelFillUp() {
+	rows := len(this.s1) + 1
+	cols := len(this.s2) + 1
+	var wg sync.WaitGroup
+	// fmt.Println("counter", rows*cols)
+	wg.Add(rows * cols)
+	for i := 0; i < rows; i += 1 {
+		for j := 0; j < rows; j += 1 {
+			go this.routine(i, j, &wg)
+		}
+	}
+	wg.Wait()
 }
 
 func (this *Matrix) fillUp() {
@@ -138,11 +186,16 @@ func main() {
 	s1 := *arg1
 	s2 := *arg2
 	matrix := createMatrix(s1, s2)
-	matrix.fillUp()
-	fmt.Println(matrix)
+	start := time.Now()
+	matrix.parallelFillUp()
+	// matrix.fillUp()
+	elapsed := time.Since(start)
+	fmt.Println("time took ", elapsed)
 	// fmt.Println(matrix)
-	r1, r2, v := matrix.extractVals()
-	fmt.Println(r1)
-	fmt.Println(r2)
-	fmt.Println(v)
+	// fmt.Println(matrix)
+	// r1, r2, v := matrix.extractVals()
+	// matrix.extractVals()
+	// fmt.Println(r1)
+	// fmt.Println(r2)
+	// fmt.Println(v)
 }
