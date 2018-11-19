@@ -60,12 +60,6 @@ func (this Matrix) String() string {
 		}
 		result += "\n"
 	}
-	for i := 0; i < len(w1); i += 1 {
-		for j := 0; j < len(this.s2)+1; j += 1 {
-			result += strconv.Itoa(this.prev[i][j]) + " "
-		}
-		result += "\n"
-	}
 	return result
 }
 
@@ -182,20 +176,28 @@ func (this *Matrix) extractVals() (string, string, int) {
 func main() {
 	arg1 := flag.String("s1", "", "First string")
 	arg2 := flag.String("s2", "", "Second string")
+        arg3 := flag.Bool("parallel", false, "Run program with parallelism")
+        arg4 := flag.Bool("csv", false, "Output only time taken")
 	flag.Parse()
 	s1 := *arg1
 	s2 := *arg2
+        parallel := *arg3
+        csv := *arg4
 	matrix := createMatrix(s1, s2)
 	start := time.Now()
-	matrix.parallelFillUp()
-	// matrix.fillUp()
-	elapsed := time.Since(start)
-	fmt.Println("time took ", elapsed)
-	// fmt.Println(matrix)
-	// fmt.Println(matrix)
-	// r1, r2, v := matrix.extractVals()
-	// matrix.extractVals()
-	// fmt.Println(r1)
-	// fmt.Println(r2)
-	// fmt.Println(v)
+        if(parallel) {
+            matrix.parallelFillUp()
+        } else {
+            matrix.fillUp()
+        }
+        if(csv) {
+            elapsed := time.Since(start)
+            fmt.Println("time took ", elapsed)
+        } else {
+            r1, r2, _ := matrix.extractVals()
+            matrix.extractVals()
+            fmt.Println(matrix)
+            fmt.Println(r1)
+            fmt.Println(r2)
+        }
 }
